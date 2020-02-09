@@ -1,4 +1,4 @@
-import express from 'express';
+import express, {Request, Response} from 'express';
 import bodyParser from 'body-parser';
 import {filterImageFromURL, deleteLocalFiles} from './util/util';
 
@@ -29,6 +29,31 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
 
   /**************************************************************************** */
 
+  app.get("/filteredimage", async (req : Request, res : Response) => {
+    const image_url = req.query.image_url;
+
+    console.log("Trying to get image " + image_url);
+
+    if(!image_url){
+      return res.status(400).send("Missing image_url parameter");
+    }
+    
+    return  filterImageFromURL(image_url).then( filtered => {
+      console.log("Processed image " + filtered);
+
+      return res.status(200).sendFile(filtered, error => {
+        if(error){
+          console.log(error);
+          return res.status(500).send({"message": "Failed to return image"});
+        }
+
+        deleteLocalFiles(Array.of(filtered));
+      });
+
+    }, error => {
+      return res.status(500).send({"message": "Failed while getting/filtering image"});
+    });
+  });
   //! END @TODO1
   
   // Root Endpoint
